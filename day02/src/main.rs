@@ -1,8 +1,10 @@
 
 // 1:02 start (31.1.2023)
 // 1:34 part 1 done
+// 1:46 part 2 done
 
 use input_downloader::*;
+
 
 #[derive(PartialEq,Debug,Clone,Copy)]
 enum RPS {
@@ -29,15 +31,15 @@ impl RPS {
 
     fn parse(c: char) -> RPS {
         match c {
-            'A' | 'X' => Rock,
-            'B' | 'Y' => Paper,
-            'C' | 'Z' => Scissors,
+            'A' => Rock,
+            'B' => Paper,
+            'C' => Scissors,
             _ => panic!("invalid char")
         }
     }
 }
 
-#[derive(PartialEq,Debug)]
+#[derive(PartialEq,Debug,Clone,Copy)]
 enum Outcome {
     Lose,
     Draw,
@@ -51,13 +53,10 @@ impl Outcome {
             return Draw;
         }
         match (me, opponent) {
-            (Rock, Paper) => Lose,
-            (Rock, Scissors) => Win,
-            (Paper, Rock) => Win,
-            (Paper, Scissors) => Lose,
-            (Scissors, Rock) => Lose,
-            (Scissors, Paper)=> Win,
-            _ => panic!("dunno")
+            (Rock, Scissors)    => Win,
+            (Paper, Rock)       => Win,
+            (Scissors, Paper)   => Win,
+            _                   => Lose
         }
     }
 
@@ -66,6 +65,15 @@ impl Outcome {
             Lose => 0,
             Draw => 3,
             Win  => 6
+        }
+    }
+
+    fn parse(c: char) -> Outcome {
+        match c {
+            'X' => Lose,
+            'Y' => Draw,
+            'Z' => Win,
+            _ => panic!("invalid char")
         }
     }
 }
@@ -79,11 +87,19 @@ fn main() {
 // C Z".to_string();
 
     let mut score = 0;
+    let my_choices = [Rock, Paper, Scissors];
 
     for line in input.lines() {
         let opp = RPS::parse(line.chars().nth(0).unwrap());
-        let me  = RPS::parse(line.chars().nth(2).unwrap());
-        // println!("Score for {:?} @ {:?} = {}", me, opp, RPS::score_for_round(me, opp));
+        let outcome = Outcome::parse(line.chars().nth(2).unwrap());
+        let mut me = Rock;
+
+        for choice in my_choices {
+            if Outcome::of(choice, opp) == outcome {
+                me = choice;
+                break;
+            }
+        }
         score += RPS::score_for_round(me, opp);
     }
 
