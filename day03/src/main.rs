@@ -1,6 +1,7 @@
 
 // 23:30 start
 // 23:53 part1 done
+// 0:14 part2 done
 
 use input_downloader;
 
@@ -18,17 +19,22 @@ CrZsJsPPZsGzwwsLwLmpwMDw
 ").get();
 
     let mut sum: u32 = 0;
+    let mut trio = Vec::new();
 
     for line in input.lines() {
-        let split_pos = line.len() / 2;
-        let compartment1 = &line[..split_pos];
-        let compartment2 = &line[split_pos..];
-        // println!("prio = {}", priority_from_char(line.chars().next().unwrap()));
-        let items1 = parse_items(compartment1);
-        let items2 = parse_items(compartment2);
-        let common = items1.intersection(&items2).next().expect("no common item found!");
+        let items = parse_items(line);
+        trio.push(items);
+        if trio.len() == 3 {
+            let common_str = trio[0].intersection(&trio[1]).collect::<String>();
+            let common_perkele = parse_items(&common_str);
+            let common = common_perkele.intersection(&trio[2])
+                .next().expect("no common item found!");
 
-        sum += priority_from_char(*common) as u32;
+            println!("Found badge: {common}");
+            sum += priority_from_char(*common) as u32;
+
+            trio.clear();
+        }
     }
 
     println!("sum is {sum}");
@@ -48,4 +54,13 @@ fn parse_items(line: &str) -> HashSet<char> {
         h.insert(c);
     }
     h
+}
+
+fn parse_line(line: &str) -> (HashSet<char>, HashSet<char>) {
+    let split_pos = line.len() / 2;
+    let compartment1 = &line[..split_pos];
+    let compartment2 = &line[split_pos..];
+    let items1 = parse_items(compartment1);
+    let items2 = parse_items(compartment2);
+    (items1, items2)
 }
