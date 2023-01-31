@@ -86,14 +86,13 @@ C Z"
 ).get();
 
     let mut score = 0;
-    let my_choices = [Rock, Paper, Scissors];
 
     for line in input.lines() {
         let opp = RPS::parse(line.chars().nth(0).unwrap());
         let outcome = Outcome::parse(line.chars().nth(2).unwrap());
         let mut me = Rock;
 
-        for choice in my_choices {
+        for choice in [Rock, Paper, Scissors] {
             if Outcome::of(choice, opp) == outcome {
                 me = choice;
                 break;
