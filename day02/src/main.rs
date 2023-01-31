@@ -3,7 +3,7 @@
 // 1:34 part 1 done
 // 1:46 part 2 done
 
-use input_downloader::*;
+use input_downloader;
 
 
 #[derive(PartialEq,Debug,Clone,Copy)]
@@ -79,12 +79,11 @@ impl Outcome {
 }
 
 fn main() {
-    let input = get_input(2022);
-
-//     let input = "\
-// A Y
-// B X
-// C Z".to_string();
+    let input = input_downloader::year(2022).example(
+"A Y
+B X
+C Z"
+).get();
 
     let mut score = 0;
     let my_choices = [Rock, Paper, Scissors];
