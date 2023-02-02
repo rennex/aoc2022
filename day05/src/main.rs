@@ -1,5 +1,6 @@
 // 23:02 start
 // 1:11 part 1 done. What a piece of shit!
+// 1:20 part 2 done.
 
 use input_downloader;
 use std::collections::VecDeque;
@@ -83,8 +84,13 @@ fn rearrange<'a>(lines: &mut impl Iterator<Item=&'a str>, stacks: &mut Vec<VecDe
         if let [count, from, to] = ops[0..3] {
             println!("moving {count} from {from} to {to}");
 
+            let mut storage = vec![];
             for _ in 0..count {
                 let item = stacks[from].pop_back().unwrap();
+                storage.push(item);
+            }
+            for _ in 0..count {
+                let item = storage.pop().unwrap();
                 stacks[to].push_back(item);
             }
         }
