@@ -1,6 +1,7 @@
 
 // 22:09 start
 // 22:49 part1 done
+// 22:53 part2 done. Twisted, but it works...
 
 use input_downloader;
 
@@ -43,14 +44,11 @@ fn parse_range(range_txt: &str) -> RangeInclusive<i32> {
 }
 
 fn overlap(l: RangeInclusive<i32>, r: RangeInclusive<i32>) -> bool {
-    // println!("Comparing {:?} and {:?}", &l, &r);
-    let c1 = l.start().cmp(r.start()) as i8;
-    let c2 = l.end().cmp(r.end()) as i8;
+    println!("Comparing {:?} and {:?}", &l, &r);
+    let c1 = l.start().cmp(r.end()) as i8;
+    let c2 = l.end().cmp(r.start()) as i8;
 
-    // println!("results: {c1} * {c2}");
+    println!("results: {c1} * {c2} = {}", c1*c2);
 
-    let res = c1*c2 != 1;
-
-    // println!("= {res}");
-    res
+    c1*c2 != 1
 }
