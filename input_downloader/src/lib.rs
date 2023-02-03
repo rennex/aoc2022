@@ -116,6 +116,19 @@ pub fn year(year: u32) -> InputDownloader {
     }
 }
 
+fn example_num_from_env() -> Option<usize> {
+    if let Some(e_arg) = env::args()
+        .find(|arg| arg.starts_with("-e"))
+    {
+        let num_slice = &e_arg[2..];
+        if num_slice.len() == 0 {
+            return Some(0);
+        }
+        return num_slice.parse().ok();
+    }
+    None
+}
+
 impl InputDownloader {
     /// Adds an example input. May be called multiple times.
     pub fn example(mut self, text: &str) -> Self {
@@ -125,14 +138,34 @@ impl InputDownloader {
 
     /// Returns the wanted input: normally the real input, or
     /// the first example if "-e" is specified on the command line.
-    /// "-e1" returns the second example, etc.
+    /// "-e2" returns the second example, etc.
     pub fn get(&self) -> String {
         if self.examples.len() > 0 {
-            if let Some(e_arg) = env::args().find(|a| a.starts_with("-e")) {
-                let num: usize = e_arg[2..].parse().unwrap_or(0);
+            if let Some(mut num) = example_num_from_env() {
+                if num != 0 {
+                    num -= 1;
+                }
                 return self.examples[num].clone();
             }
         }
         get_input(self.year)
     }
+
+    /// Returns the wanted input as a collection: normally the real
+    /// input as the only String in a Vec, or all examples if "-e"
+    /// is specified on the command line.
+    /// "-e1" returns the first example alone, etc.
+    pub fn get_all(&self) -> Vec<String> {
+        if self.examples.len() > 0 {
+            if let Some(num) = example_num_from_env() {
+                if num != 0 {
+                    let n = num - 1;
+                    return Vec::from(&self.examples[n..=n]);
+                }
+                return self.examples.clone();
+            }
+        }
+        Vec::from([get_input(self.year)])
+    }
+
 }
