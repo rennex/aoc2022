@@ -1,6 +1,7 @@
 
 // 2:03 start
 // 4:41 solved day 1. Fuck you, compiler.
+// 8:47-10:23 studying Rust and cleaning up the code
 
 #![allow(dead_code,unused_variables,unused_mut,unused_imports)]
 use input_downloader;
@@ -8,34 +9,6 @@ use input_downloader;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-
-#[derive(Debug)]
-struct Dir {
-    parent: Option<Rc<RefCell<Dir>>>,
-    name: String,
-    total_size: usize,
-    files: Vec<Rc<RefCell<File>>>,
-    subdirs: Vec<Rc<RefCell<Dir>>>
-}
-
-impl Dir {
-    fn new(parent: Option<Rc<RefCell<Dir>>>, name: String) -> Dir {
-        Dir {
-            parent,
-            name,
-            total_size: 0,
-            files: Vec::new(),
-            subdirs: Vec::new()
-        }
-    }
-}
-
-#[derive(Debug)]
-struct File {
-    parent: Rc<RefCell<Dir>>,
-    name: String,
-    size: usize
-}
 
 fn main() {
     let inputs = input_downloader::year(2022)
@@ -67,103 +40,137 @@ $ ls
         .get_all(); 
 
     for input in inputs {
-        solve(&input);
+        Solver::new().solve(&input);
     }
 }
 
-fn solve(input: &String) {
-    let fs = parse_input(input);
 
-    du(Rc::clone(&fs));
-
-    unsafe {
-        println!("total sizes = {}", FUCKING_TOTAL);
-    }
+#[derive(Debug)]
+struct Dir {
+    parent: Option<Rc<RefCell<Dir>>>,
+    name: String,
+    total_size: usize,
+    files: Vec<Rc<RefCell<File>>>,
+    subdirs: Vec<Rc<RefCell<Dir>>>
 }
 
-static mut FUCKING_TOTAL: usize = 0;
-
-fn du(dir: Rc<RefCell<Dir>>) -> usize
-{
-    let mut total;
-    {
-        let dir = dir.borrow();
-        let files_size: usize = dir.files.iter().map(|f| f.borrow().size).sum();
-        let dirs_size: usize = dir.subdirs.iter().map(|subdir|
-            du(Rc::clone(subdir))
-        ).sum();
-        total = files_size + dirs_size;
-        // println!("Total size for {} = {}", dir.name, total);
-        if total < 100_000 {
-            unsafe {
-                FUCKING_TOTAL += total;
-            }
+impl Dir {
+    fn new(parent: Option<Rc<RefCell<Dir>>>, name: String) -> Dir {
+        Dir {
+            parent,
+            name,
+            total_size: 0,
+            files: Vec::new(),
+            subdirs: Vec::new()
         }
     }
-    dir.borrow_mut().total_size = total;
-    return total;
+}
+
+#[derive(Debug)]
+struct File {
+    parent: Rc<RefCell<Dir>>,
+    name: String,
+    size: usize
 }
 
 
-fn parse_input(input: &String) -> Rc<RefCell<Dir>> {
-    let root = Rc::new(RefCell::new(Dir::new(None, "/".to_string())));
-    let mut current_dir = Rc::clone(&root);
+struct Solver {
+    total: usize,
+}
 
-    for line in input.lines() {
-        if line.starts_with("$ cd ") {
-            // change into a directory
-            let dir = &line[5..];
-            if dir == "/" {
-                current_dir = Rc::clone(&root);
+impl Solver {
+    fn new() -> Solver {
+        Solver {
+            total: 0
+        }
+    }
+
+    fn solve(mut self, input: &String) {
+        let fs = Self::parse_input(input);
+
+        self.du(Rc::clone(&fs));
+
+        println!("total sizes = {}", self.total);
+    }
+
+    fn du(&mut self, dir: Rc<RefCell<Dir>>) -> usize {
+        let mut total;
+        {
+            let dir = dir.borrow();
+            let files_size: usize = dir.files.iter().map(|f| f.borrow().size).sum();
+            let dirs_size: usize = dir.subdirs.iter().map(|subdir|
+                self.du(Rc::clone(subdir))
+            ).sum();
+            total = files_size + dirs_size;
+            // println!("Total size for {} = {}", dir.name, total);
+            if total < 100_000 {
+                self.total += total;
             }
-            else if dir == ".." {
-                let mut next_dir = Rc::clone(&root);
-                {
-                    let parent = &current_dir.borrow().parent;
-                    if parent.is_some() {
-                        next_dir = Rc::clone(parent.as_ref().unwrap());
-                    }
+        }
+        dir.borrow_mut().total_size = total;
+        return total;
+    }
+
+
+    fn parse_input(input: &String) -> Rc<RefCell<Dir>> {
+        let root = Rc::new(RefCell::new(Dir::new(None, "/".to_string())));
+        let mut current_dir = Rc::clone(&root);
+
+        for line in input.lines() {
+            if line.starts_with("$ cd ") {
+                // change into a directory
+                let dir = &line[5..];
+                if dir == "/" {
+                    current_dir = Rc::clone(&root);
                 }
-                current_dir = next_dir;
+                else if dir == ".." {
+                    let mut next_dir = Rc::clone(&root);
+                    {
+                        let parent = &current_dir.borrow().parent;
+                        if parent.is_some() {
+                            next_dir = Rc::clone(parent.as_ref().unwrap());
+                        }
+                    }
+                    current_dir = next_dir;
+                }
+                else {
+                    let that_dir = current_dir.borrow().subdirs.iter().find(|d| 
+                        d.borrow().name == dir
+                    ).expect("no dir found!").clone();
+                    current_dir = Rc::clone(&that_dir);
+                }
+            }
+            else if line.starts_with("$ ls") {
+                // list files, useless to us
+                // println!("listing at {}!", current_dir.borrow().name);
+            }
+            else if line.starts_with("dir ") {
+                // create a new directory
+                let dir = &line[4..];
+                // println!("found dir: {}", dir);
+                let created_dir = Rc::new(RefCell::new(
+                    Dir::new(Some(Rc::clone(&current_dir)), dir.to_string())
+                ));
+                current_dir.borrow_mut().subdirs.push(created_dir);
             }
             else {
-                let that_dir = current_dir.borrow().subdirs.iter().find(|d| 
-                    d.borrow().name == dir
-                ).expect("no dir found!").clone();
-                current_dir = Rc::clone(&that_dir);
-            }
-        }
-        else if line.starts_with("$ ls") {
-            // list files, useless to us
-            // println!("listing at {}!", current_dir.borrow().name);
-        }
-        else if line.starts_with("dir ") {
-            // create a new directory
-            let dir = &line[4..];
-            // println!("found dir: {}", dir);
-            let created_dir = Rc::new(RefCell::new(
-                Dir::new(Some(Rc::clone(&current_dir)), dir.to_string())
-            ));
-            current_dir.borrow_mut().subdirs.push(created_dir);
-        }
-        else {
-            // create a new file
-            let parts: Vec<&str> = line.splitn(2, ' ').collect();
-            if parts.len() != 2 {
-                panic!("Fuck, didn't find 2 items");
-            }
-            if let [filesize, filename] = parts[0..2] {
-                let new_file = File {
-                    parent: Rc::clone(&current_dir),
-                    name: filename.to_string(),
-                    size: filesize.parse().unwrap()
-                };
-                current_dir.borrow_mut().files.push(Rc::new(RefCell::new(new_file)));
-            }
+                // create a new file
+                let parts: Vec<&str> = line.splitn(2, ' ').collect();
+                if parts.len() != 2 {
+                    panic!("Fuck, didn't find 2 items");
+                }
+                if let [filesize, filename] = parts[0..2] {
+                    let new_file = File {
+                        parent: Rc::clone(&current_dir),
+                        name: filename.to_string(),
+                        size: filesize.parse().unwrap()
+                    };
+                    current_dir.borrow_mut().files.push(Rc::new(RefCell::new(new_file)));
+                }
 
+            }
         }
+
+        return root;
     }
-
-    return root;
 }
-
