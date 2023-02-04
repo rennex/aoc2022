@@ -4,7 +4,7 @@
 // 1:30 last tweaks to input_downloader
 // 1:43 tweaks finished, start solving
 // 1:52 solved part 1
-
+// 2:00 solved part 2 (and tweaked it more)
 
 use input_downloader;
 
@@ -23,16 +23,17 @@ fn main() {
 }
 
 fn solve(input: &String) {
-    println!("result: {}", find_sop(input.as_bytes()));
+    println!("result: {}", find_sop(input.as_bytes(), 14));
 }
 
-fn find_sop(data: &[u8]) -> usize {
-    for i in 3..data.len() {
-        let mut bytes = Vec::from(&data[i-3..=i]);
+fn find_sop(data: &[u8], width: usize) -> usize {
+    for i in width..data.len() {
+        let mut bytes = Vec::from(&data[i-width..i]);
+        let len_before = bytes.len();
         bytes.sort();
         bytes.dedup();
-        if bytes.len() == 4 {
-            return i+1;
+        if bytes.len() == len_before {
+            return i;
         }
     }
     return 0;
