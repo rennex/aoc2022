@@ -1,8 +1,9 @@
 
 // 11:22 start
-// 12:41 solve part 1
+// 12:41 solved part 1
+// 13:07 solved part 2 (total: 1h 45min)
 
-#![allow(unused)]
+// #![allow(unused)]
 use std::fmt::Display;
 
 use input_downloader;
@@ -28,11 +29,16 @@ fn solve(input: &String) {
     grid.calc_visibility();
     let visible = grid.count_visible();
     println!("Found {visible} visible trees");
+
+    // part 2
+    grid.calc_scenic_scores();
+    println!("Max scenic score = {}", grid.max_scenic_score);
 }
 
 struct TreeGrid {
     w: i32, h: i32,
-    trees: Vec<Vec<Tree>>
+    trees: Vec<Vec<Tree>>,
+    max_scenic_score: i32
 }
 
 impl TreeGrid {
@@ -43,14 +49,14 @@ impl TreeGrid {
             let mut row = vec![];
             w = line.len();
             for h in line.bytes() {
-                row.push(Tree::new(h - 48));
+                row.push(Tree::new(h - ('0' as u8)));
             }
             trees.push(row);
         }
         if !trees.iter().all(|row| row.len() == w) {
             panic!("ffs, not all tree rows are {w} wide");
         }
-        Self { w: w as i32, h: trees.len() as i32, trees }
+        Self { w: w as i32, h: trees.len() as i32, trees, max_scenic_score: 0 }
     }
 
     fn get(&mut self, pos: Coord) -> &mut Tree {
@@ -87,10 +93,10 @@ impl TreeGrid {
             Left | Right => pos.y == 0 || pos.y == self.h - 1,
         };
         if along_edge {
-            println!("Skipping scanning {dir:?} from {pos}");
+            // println!("Skipping scanning {dir:?} from {pos}");
             return;
         }
-        println!("calculating visibility from {pos} toward {dir:?}");
+        // println!("calculating visibility from {pos} toward {dir:?}");
         let mut seen_h = {
             let mut tree = self.get(pos);
             tree.visible = true;
@@ -109,7 +115,7 @@ impl TreeGrid {
             if tree.height > seen_h {
                 tree.visible = true;
                 seen_h = tree.height;
-                println!("Found visible tree at {pos}");
+                // println!("Found visible tree at {pos}");
             }
             pos = nextpos;
         }
@@ -122,16 +128,50 @@ impl TreeGrid {
                 let tree = self.get(Coord::new(x, y));
                 if tree.visible {
                     count += 1;
-                    print!("#");
+                    // print!("#");
                 } else {
-                    print!(".");
+                    // print!(".");
                 }
             }
-            println!("");
+            // println!("");
         }
         count
     }
 
+    fn calc_scenic_scores(&mut self) {
+        for x in 1..self.w-1 {
+            for y in 1..self.h-1 {
+                let pos = Coord::new(x, y);
+                let score_d = self.calc_visible_trees_toward(pos, Down);
+                let score_u = self.calc_visible_trees_toward(pos, Up);
+                let score_r = self.calc_visible_trees_toward(pos, Right);
+                let score_l = self.calc_visible_trees_toward(pos, Left);
+                let score = score_d * score_u * score_r * score_l;
+                // println!("score at {pos} = {score} ({score_u} * {score_l} * {score_d} * {score_r})");
+                if score > self.max_scenic_score {
+                    self.max_scenic_score = score;
+                }
+            }
+        }
+    }
+
+    fn calc_visible_trees_toward(&mut self, mut pos: Coord, dir: Direction) -> i32 {
+        let mut count = 0;
+        let height = self.get(pos).height;
+        loop {
+            let nextpos = pos.move_toward(dir);
+            if !self.contains_coord(nextpos) {
+                break;
+            }
+            count += 1;
+            let tree = self.get(nextpos);
+            if tree.height >= height {
+                break;
+            }
+            pos = nextpos;
+        }
+        return count;
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
