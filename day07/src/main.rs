@@ -37,7 +37,7 @@ $ ls
 5626152 d.ext
 7214296 k
 ")
-        .get_all(); 
+        .get_all();
 
     for input in inputs {
         Solver::new().solve(&input);
@@ -96,8 +96,8 @@ impl Solver {
     fn du(&mut self, dir: Rc<RefCell<Dir>>) -> usize {
         let mut total;
         {
-            let dir = dir.borrow();
-            let files_size: usize = dir.files.iter().map(|f| f.borrow().size).sum();
+            let dir = (*dir).borrow();
+            let files_size: usize = dir.files.iter().map(|f| (**f).borrow().size).sum();
             let dirs_size: usize = dir.subdirs.iter().map(|subdir|
                 self.du(Rc::clone(subdir))
             ).sum();
@@ -107,7 +107,8 @@ impl Solver {
                 self.total += total;
             }
         }
-        dir.borrow_mut().total_size = total;
+        let mut foo = (*dir).borrow_mut();
+        foo.total_size = total;
         return total;
     }
 
@@ -134,10 +135,10 @@ impl Solver {
                     current_dir = next_dir;
                 }
                 else {
-                    let that_dir = current_dir.borrow().subdirs.iter().find(|d| 
+                    let that_dir = current_dir.borrow().subdirs.iter().find(|&d|
                         d.borrow().name == dir
                     ).expect("no dir found!").clone();
-                    current_dir = Rc::clone(&that_dir);
+                    current_dir = that_dir;
                 }
             }
             else if line.starts_with("$ ls") {
