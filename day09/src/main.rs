@@ -2,7 +2,7 @@
 // 15:30 start
 // 15:50 part 1 done
 // 16:10 part 2 done
-// 16:25 tweaked code
+// 16:32 tweaked code
 
 // #![allow(unused)]
 use std::fmt::Display;
@@ -42,10 +42,8 @@ fn solve(input: &String) {
     let mut tail_coords = HashSet::new();
     tail_coords.insert(Coord::new(0, 0));
 
-    let mut knots = vec![];
-    for _ in 0..9 {
-        knots.push(Coord::new(0, 0));
-    }
+    // create a vec of 9 knots
+    let mut knots = vec![Coord::new(0, 0); 9];
 
     for line in input.lines() {
         let dir = match line.chars().nth(0).unwrap() {
