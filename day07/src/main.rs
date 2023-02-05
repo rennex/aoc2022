@@ -1,7 +1,10 @@
 
 // 2:03 start
-// 4:41 solved day 1. Fuck you, compiler.
+// 4:41 solved part 1. Fuck you, compiler.
 // 8:47-10:23 studying Rust and cleaning up the code
+// (day changed)
+// 10:38 start part 2
+// 11:06 solved part 2
 
 #![allow(dead_code,unused_variables,unused_mut,unused_imports)]
 use input_downloader;
@@ -91,6 +94,27 @@ impl Solver {
         self.du(Rc::clone(&fs));
 
         println!("total sizes = {}", self.total);
+
+        let free_space = 70_000_000 - fs.borrow().total_size;
+        let needed_space = 30_000_000 - free_space;
+        println!("Need to find {needed_space} bytes to delete");
+
+        let dir_sizes = Rc::new(RefCell::new(Vec::<usize>::new()));
+        Self::list_dirs(fs, Rc::clone(&dir_sizes));
+        let mut dir_sizes = dir_sizes.borrow_mut();
+        dir_sizes.sort();
+        println!("sizes: {dir_sizes:?}");
+        if let Some(chosen) = dir_sizes.iter().find(|&&s| s >= needed_space) {
+            println!("chose {chosen}");
+        }
+    }
+
+    fn list_dirs(dir: Rc<RefCell<Dir>>, sizes: Rc<RefCell<Vec<usize>>>) {
+        let this_dir = dir.borrow();
+        sizes.borrow_mut().push(this_dir.total_size);
+        for d in this_dir.subdirs.iter() {
+            Self::list_dirs(Rc::clone(&d), Rc::clone(&sizes));
+        }
     }
 
     fn du(&mut self, dir: Rc<RefCell<Dir>>) -> usize {
