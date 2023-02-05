@@ -2,6 +2,7 @@
 // 15:30 start
 // 15:50 part 1 done
 // 16:10 part 2 done
+// 16:25 tweaked code
 
 // #![allow(unused)]
 use std::fmt::Display;
@@ -58,7 +59,7 @@ fn solve(input: &String) {
         // println!("{steps} steps {dir:?}");
 
         for _ in 0..steps {
-            head = head.move_toward(dir);
+            head = head + dir.into();
             move_knots(&mut knots, head, &mut tail_coords);
         }
     }
@@ -103,22 +104,21 @@ impl Display for Coord {
     }
 }
 
+impl From<Direction> for Coord {
+    fn from(dir: Direction) -> Coord {
+        let (x, y) = match dir {
+            Up      => ( 0,-1),
+            Down    => ( 0, 1),
+            Left    => (-1, 0),
+            Right   => ( 1, 0)
+        };
+        Coord { x, y }
+    }
+}
+
 impl Coord {
     fn new(x: i32, y: i32) -> Coord {
         Coord { x, y }
-    }
-
-    fn move_toward(&self, direction: Direction) -> Coord {
-        let (dx, dy) = match direction {
-            Up => (0,-1),
-            Down => (0,1),
-            Left => (-1,0),
-            Right => (1,0)
-        };
-        Coord {
-            x: self.x + dx,
-            y: self.y + dy
-        }
     }
 
     fn max_abs(&self) -> i32 {
