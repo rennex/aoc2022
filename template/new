@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+
+def die(msg)
+    STDERR.puts msg
+    exit 1
+end
+
+dir = ARGV[0]
+if dir.nil?
+    die "Usage: #$0 <new_dir_name>"
+end
+
+if dir =~ /[^-_a-zA-Z0-9]/
+    die "Error: unsafe char '#{$&}' in target name, aborting!"
+end
+
+if File.exist? dir
+    die "Target dir '#{dir}' already exists!"
+end
+
+Dir.chdir(__dir__ + "/..")
+Dir.mkdir(dir)
+Dir.mkdir(dir + "/src")
+FileUtils.cp("template/src/main.rs", dir + "/src")
+
+cargo_toml = File.read("template/Cargo.toml")
+cargo_toml.gsub!(/temp_name/, dir)
+File.open(dir + "/Cargo.toml", "w") do |f|
+    f.write(cargo_toml)
+end
