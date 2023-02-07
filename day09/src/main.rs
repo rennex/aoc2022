@@ -8,29 +8,31 @@
 use std::fmt::Display;
 use std::ops::{Add, Sub};
 use std::collections::HashSet;
+use indoc::indoc;
 
 use input_downloader;
 
 fn main() {
     let inputs = input_downloader::year(2022)
-.example(
-"R 4
-U 4
-L 3
-D 1
-R 4
-D 1
-L 5
-R 2").example(
-"R 5
-U 8
-L 8
-D 3
-R 17
-D 10
-L 25
-U 20")
-        .get_all();
+        .example(indoc!("
+            R 4
+            U 4
+            L 3
+            D 1
+            R 4
+            D 1
+            L 5
+            R 2
+        ")).example(indoc!("
+            R 5
+            U 8
+            L 8
+            D 3
+            R 17
+            D 10
+            L 25
+            U 20
+        ")).get_all();
 
     for input in inputs {
         solve(&input);

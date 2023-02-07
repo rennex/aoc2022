@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 input_downloader = { path = "../input_downloader" }
+indoc = "2"
